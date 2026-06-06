@@ -61,19 +61,14 @@ class ReimburseController extends Controller
             'jabatan'                             => 'nullable|string|max:100',
             'items'                               => 'required|array|min:1',
             'items.*.tanggal_pengeluaran'         => 'required|date|before_or_equal:today',
-            'items.*.kategori'                    => 'required|in:TRANSPORT,MAKAN,AKOMODASI,OPERASIONAL,LAINNYA',
             'items.*.keterangan'                  => 'required|string|max:1000',
-            'items.*.nominal_diajukan'            => 'required|numeric|min:1',
         ], [
             'cabang_id.required'                          => 'Cabang wajib dipilih.',
             'nama_pemohon.required'                       => 'Nama pemohon wajib diisi.',
             'items.required'                              => 'Minimal 1 item reimburse wajib diisi.',
             'items.*.tanggal_pengeluaran.required'        => 'Tanggal pengeluaran wajib diisi.',
             'items.*.tanggal_pengeluaran.before_or_equal' => 'Tanggal pengeluaran tidak boleh lebih dari hari ini.',
-            'items.*.kategori.required'                   => 'Kategori wajib dipilih.',
             'items.*.keterangan.required'                 => 'Keterangan wajib diisi.',
-            'items.*.nominal_diajukan.required'           => 'Nominal wajib diisi.',
-            'items.*.nominal_diajukan.numeric'            => 'Nominal harus berupa angka.',
         ]);
 
         // Validate that each item has at least 1 lampiran file
@@ -94,6 +89,16 @@ class ReimburseController extends Controller
                 $item        = $items[$idx];
                 $noReimburse = NomorPengajuanService::generateReimburse($cabang->kode_cabang);
 
+                $files     = $request->file("lampiran_{$idx}", []);
+                $jeniss    = $request->input("jenis_lampiran_{$idx}", []);
+                $kategoris = $request->input("kategori_lampiran_{$idx}", []);
+                $nominals  = $request->input("nominal_lampiran_{$idx}", []);
+
+                // Hitung total nominal dari semua baris lampiran
+                $totalNominal   = array_sum(array_map('floatval', array_filter($nominals)));
+                // Kategori utama = kategori dari baris pertama yang ada filenya
+                $kategoriUtama  = !empty($kategoris[0]) ? $kategoris[0] : 'LAINNYA';
+
                 $reimburse = Reimburse::create([
                     'no_reimburse'        => $noReimburse,
                     'batch_id'            => $batchId,
@@ -102,22 +107,24 @@ class ReimburseController extends Controller
                     'nama_pemohon'        => $request->nama_pemohon,
                     'jabatan'             => $request->jabatan,
                     'tanggal_pengeluaran' => $item['tanggal_pengeluaran'],
-                    'kategori'            => $item['kategori'],
+                    'kategori'            => $kategoriUtama,
                     'keterangan'          => $item['keterangan'],
-                    'nominal_diajukan'    => $item['nominal_diajukan'],
+                    'nominal_diajukan'    => $totalNominal > 0 ? $totalNominal : 0,
                     'status'              => 'MENUNGGU',
                 ]);
 
-                $files  = $request->file("lampiran_{$idx}", []);
-                $jeniss = $request->input("jenis_lampiran_{$idx}", []);
                 foreach ($files as $i => $file) {
-                    $jenis  = $jeniss[$i] ?? 'LAINNYA';
-                    $ext    = $file->getClientOriginalExtension();
-                    $stored = Str::uuid() . '.' . $ext;
+                    $jenis    = $jeniss[$i]    ?? 'LAINNYA';
+                    $kategori = $kategoris[$i] ?? 'LAINNYA';
+                    $nominal  = floatval($nominals[$i] ?? 0);
+                    $ext      = $file->getClientOriginalExtension();
+                    $stored   = Str::uuid() . '.' . $ext;
                     $file->storeAs('private/reimburse', $stored);
                     LampiranReimburse::create([
                         'reimburse_id'      => $reimburse->id,
                         'jenis_dokumen'     => $jenis,
+                        'kategori_biaya'    => $kategori,
+                        'nominal'           => $nominal,
                         'nama_file_asli'    => $file->getClientOriginalName(),
                         'nama_file_storage' => $stored,
                         'ukuran_file'       => $file->getSize(),

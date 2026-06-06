@@ -9,7 +9,7 @@ class LampiranReimburse extends Model
     protected $table = 'lampiran_reimburse';
 
     protected $fillable = [
-        'reimburse_id','jenis_dokumen','nama_file_asli',
+        'reimburse_id','jenis_dokumen','kategori_biaya','nominal','nama_file_asli',
         'nama_file_storage','ukuran_file','mime_type','diupload_oleh',
     ];
 

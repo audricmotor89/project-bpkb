@@ -122,35 +122,70 @@
             <div class="card-header bg-white py-3">
                 <h6 class="mb-0 fw-semibold"><i class="bi bi-images me-2"></i>Lampiran Bukti ({{ $reimburse->lampiran->count() }} file)</h6>
             </div>
-            <div class="card-body">
-                @forelse($reimburse->lampiran as $lamp)
-                <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
-                    <div class="d-flex align-items-center gap-3">
-                        @if(str_starts_with($lamp->mime_type, 'image/'))
-                            <img src="{{ route('reimburse.lampiran.download', $lamp) }}"
-                                 class="rounded border"
-                                 style="width:60px;height:60px;object-fit:cover;"
-                                 alt="{{ $lamp->nama_file_asli }}"
-                                 onerror="this.style.display='none'">
-                        @else
-                            <div class="text-danger fs-2"><i class="bi bi-file-earmark-pdf"></i></div>
-                        @endif
-                        <div>
-                            <div class="small fw-semibold">{{ $lamp->nama_file_asli }}</div>
-                            <div class="text-muted" style="font-size:0.75rem;">
-                                <span class="badge bg-secondary me-1">{{ $lamp->jenis_dokumen }}</span>
-                                {{ $lamp->ukuran_format }}
-                            </div>
-                        </div>
-                    </div>
-                    <a href="{{ route('reimburse.lampiran.download', $lamp) }}"
-                       class="btn btn-sm btn-outline-primary" target="_blank">
-                        <i class="bi bi-download"></i>
-                    </a>
-                </div>
-                @empty
-                <p class="text-muted small mb-0">Tidak ada lampiran.</p>
-                @endforelse
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>File</th>
+                            <th>Kategori Biaya</th>
+                            <th>Jenis Dokumen</th>
+                            <th class="text-end">Nominal</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($reimburse->lampiran as $lamp)
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if(str_starts_with($lamp->mime_type, 'image/'))
+                                        <img src="{{ route('reimburse.lampiran.download', $lamp) }}"
+                                             class="rounded border"
+                                             style="width:48px;height:48px;object-fit:cover;"
+                                             onerror="this.style.display='none'">
+                                    @else
+                                        <div class="text-danger fs-3"><i class="bi bi-file-earmark-pdf"></i></div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-semibold" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $lamp->nama_file_asli }}</div>
+                                        <div class="text-muted" style="font-size:0.72rem;">{{ $lamp->ukuran_format }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if($lamp->kategori_biaya)
+                                    <span class="badge bg-secondary">{{ $kategoriLabel[$lamp->kategori_biaya] ?? $lamp->kategori_biaya }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ $lamp->jenis_dokumen }}</span></td>
+                            <td class="text-end fw-semibold">
+                                {{ $lamp->nominal ? 'Rp '.number_format($lamp->nominal,0,',','.') : '-' }}
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('reimburse.lampiran.download', $lamp) }}"
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="5" class="text-center text-muted py-3">Tidak ada lampiran.</td></tr>
+                        @endforelse
+                    </tbody>
+                    @if($reimburse->lampiran->count() > 0)
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-semibold">Total Nominal:</td>
+                            <td class="text-end fw-bold text-primary">
+                                Rp {{ number_format($reimburse->lampiran->sum('nominal'), 0, ',', '.') }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                    @endif
+                </table>
             </div>
         </div>
     </div>

@@ -117,7 +117,7 @@ class LaporanReimburseController extends Controller
 
     private function query(Request $request, $user)
     {
-        return Reimburse::with(['cabang', 'pembuatnya', 'pemrosesnya'])
+        return Reimburse::with(['cabang', 'pembuatnya', 'pemrosesnya', 'lampiran'])
             ->when($user->isAdminCabang(), fn($q) => $q->whereIn('cabang_id', $user->cabangIds()))
             ->when($request->cabang_id,   fn($q) => $q->where('cabang_id', $request->cabang_id))
             ->when($request->kategori,    fn($q) => $q->where('kategori', $request->kategori))

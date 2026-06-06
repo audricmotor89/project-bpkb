@@ -128,10 +128,10 @@
                     <th>Tgl Pengeluaran</th>
                     <th>Cabang</th>
                     <th>Pemohon</th>
-                    <th>Kategori</th>
                     <th>Keterangan</th>
-                    <th class="text-end">Nominal Diajukan</th>
-                    <th class="text-end">Nominal Disetujui</th>
+                    <th>Lampiran Bukti</th>
+                    <th class="text-end">Total Diajukan</th>
+                    <th class="text-end">Total Disetujui</th>
                     <th>Status</th>
                     <th>Diproses Oleh</th>
                 </tr>
@@ -140,13 +140,66 @@
                 @forelse($reimburse as $r)
                 @php $badge = ['MENUNGGU'=>'warning','DISETUJUI'=>'success','DITOLAK'=>'danger']; @endphp
                 <tr>
-                    <td class="font-monospace fw-semibold">{{ $r->no_reimburse }}</td>
+                    <td>
+                        <a href="{{ route('reimburse.show', $r) }}" class="font-monospace fw-semibold text-decoration-none">
+                            {{ $r->no_reimburse }}
+                        </a>
+                    </td>
                     <td>{{ $r->tanggal_pengeluaran?->format('d/m/Y') }}</td>
-                    <td>{{ $r->cabang?->nama_cabang }}</td>
+                    <td>{{ $r->cabang?->kode_cabang }}</td>
                     <td>{{ $r->nama_pemohon }}</td>
-                    <td><span class="badge bg-secondary">{{ $kategori[$r->kategori] ?? $r->kategori }}</span></td>
-                    <td class="text-muted">{{ Str::limit($r->keterangan, 35) }}</td>
-                    <td class="text-end">Rp {{ number_format($r->nominal_diajukan,0,',','.') }}</td>
+                    <td class="text-muted">{{ Str::limit($r->keterangan, 30) }}</td>
+                    <td>
+                        {{-- Tabel mini lampiran dengan kategori, jenis, nominal --}}
+                        @if($r->lampiran->count() > 0)
+                        <table class="table table-borderless mb-0" style="font-size:0.7rem;min-width:260px;">
+                            <thead>
+                                <tr class="text-muted">
+                                    <th class="py-0 px-1">Kategori</th>
+                                    <th class="py-0 px-1">Jenis</th>
+                                    <th class="py-0 px-1 text-center">📎</th>
+                                    <th class="py-0 px-1 text-end">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($r->lampiran as $lamp)
+                                <tr>
+                                    <td class="py-0 px-1">
+                                        <span class="badge bg-secondary" style="font-size:0.65rem;">
+                                            {{ $kategori[$lamp->kategori_biaya] ?? ($lamp->kategori_biaya ?: '-') }}
+                                        </span>
+                                    </td>
+                                    <td class="py-0 px-1 text-muted">{{ $lamp->jenis_dokumen }}</td>
+                                    <td class="py-0 px-1 text-center">
+                                        @if(str_starts_with($lamp->mime_type,'image/'))
+                                            <a href="{{ route('reimburse.lampiran.download', $lamp) }}" target="_blank">
+                                                <img src="{{ route('reimburse.lampiran.download', $lamp) }}"
+                                                    style="width:28px;height:28px;object-fit:cover;border-radius:4px;border:1px solid #dee2e6;">
+                                            </a>
+                                        @else
+                                            <a href="{{ route('reimburse.lampiran.download', $lamp) }}" target="_blank">
+                                                <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                            </a>
+                                        @endif
+                                    </td>
+                                    <td class="py-0 px-1 text-end fw-semibold">
+                                        {{ $lamp->nominal ? 'Rp '.number_format($lamp->nominal,0,',','.') : '-' }}
+                                    </td>
+                                </tr>
+                                @endforeach
+                                <tr class="border-top">
+                                    <td colspan="3" class="py-0 px-1 text-end fw-bold text-primary" style="font-size:0.7rem;">Total:</td>
+                                    <td class="py-0 px-1 text-end fw-bold text-primary" style="font-size:0.7rem;">
+                                        Rp {{ number_format($r->lampiran->sum('nominal'),0,',','.') }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        @else
+                        <span class="text-muted">-</span>
+                        @endif
+                    </td>
+                    <td class="text-end fw-semibold">Rp {{ number_format($r->nominal_diajukan,0,',','.') }}</td>
                     <td class="text-end {{ $r->status === 'DISETUJUI' ? 'text-success fw-semibold' : 'text-muted' }}">
                         {{ $r->nominal_disetujui ? 'Rp '.number_format($r->nominal_disetujui,0,',','.') : '-' }}
                     </td>
