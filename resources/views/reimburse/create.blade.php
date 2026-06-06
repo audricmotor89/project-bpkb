@@ -90,19 +90,28 @@
                         required>{{ old('items.0.keterangan') }}</textarea>
                 </div>
             </div>
-            {{-- Lampiran per item --}}
+            {{-- Lampiran per item (default 3 baris, max 5) --}}
             <div class="mt-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small fw-semibold"><i class="bi bi-paperclip me-1"></i>Lampiran Bukti <span class="text-danger">*</span></span>
+                    <span class="small fw-semibold">
+                        <i class="bi bi-paperclip me-1"></i>Lampiran Bukti <span class="text-danger">*</span>
+                        <span class="text-muted fw-normal">(maks. 5 file)</span>
+                    </span>
                     <button type="button" class="btn btn-sm btn-outline-secondary btn-tambah-lampiran">
                         <i class="bi bi-plus me-1"></i>Tambah File
                     </button>
                 </div>
+                <div class="alert alert-light border py-2 mb-2 small">
+                    <i class="bi bi-camera me-1 text-primary"></i>
+                    Bisa upload dari <strong>galeri</strong> atau langsung <strong>ambil foto</strong> menggunakan kamera HP.
+                    Format: JPG/PNG/PDF, maks. 5MB per file.
+                </div>
                 <div class="lampiran-container">
+                    @for($r = 0; $r < 3; $r++)
                     <div class="lampiran-row border rounded p-2 mb-1">
                         <div class="row g-2 align-items-center">
                             <div class="col-md-4">
-                                <select name="jenis_lampiran_0[]" class="form-select form-select-sm" required>
+                                <select name="jenis_lampiran_0[]" class="form-select form-select-sm" {{ $r === 0 ? 'required' : '' }}>
                                     <option value="KWITANSI">Kwitansi</option>
                                     <option value="STRUK">Struk / Receipt</option>
                                     <option value="FOTO">Foto Bukti</option>
@@ -110,17 +119,21 @@
                                 </select>
                             </div>
                             <div class="col-md-7">
-                                <input type="file" name="lampiran_0[]" class="form-control form-control-sm file-input"
-                                    accept=".jpg,.jpeg,.png,.pdf" required>
+                                <input type="file" name="lampiran_0[]"
+                                    class="form-control form-control-sm file-input"
+                                    accept="image/*,.pdf"
+                                    
+                                    {{ $r === 0 ? 'required' : '' }}>
                             </div>
                             <div class="col-md-1">
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-lampiran d-none">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-lampiran {{ $r === 0 ? 'd-none' : '' }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                             <div class="col-12 preview-area"></div>
                         </div>
                     </div>
+                    @endfor
                 </div>
             </div>
         </div>
@@ -231,14 +244,24 @@ function bindItemEvents(itemEl) {
 
     itemEl.querySelector('.btn-tambah-lampiran').addEventListener('click', () => {
         const container = itemEl.querySelector('.lampiran-container');
+        const rows = container.querySelectorAll('.lampiran-row');
+        if (rows.length >= 5) {
+            alert('Maksimal 5 file lampiran per item.');
+            return;
+        }
         const firstRow = container.querySelector('.lampiran-row');
         const clone = firstRow.cloneNode(true);
         clone.querySelector('input[type="file"]').value = '';
+        clone.querySelector('input[type="file"]').removeAttribute('required');
         clone.querySelector('.preview-area').innerHTML = '';
         clone.querySelector('.btn-hapus-lampiran').classList.remove('d-none');
         container.appendChild(clone);
         bindLampiranEvents(clone);
         container.querySelectorAll('.btn-hapus-lampiran').forEach(b => b.classList.remove('d-none'));
+        // Sembunyikan tombol Tambah jika sudah 5
+        if (container.querySelectorAll('.lampiran-row').length >= 5) {
+            itemEl.querySelector('.btn-tambah-lampiran').classList.add('d-none');
+        }
     });
 
     itemEl.querySelectorAll('.lampiran-row').forEach(row => bindLampiranEvents(row));
@@ -285,16 +308,20 @@ document.getElementById('btnTambahItem').addEventListener('click', () => {
         </div>
         <div class="mt-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small fw-semibold"><i class="bi bi-paperclip me-1"></i>Lampiran Bukti <span class="text-danger">*</span></span>
+                <span class="small fw-semibold"><i class="bi bi-paperclip me-1"></i>Lampiran Bukti <span class="text-danger">*</span> <span class="text-muted fw-normal">(maks. 5 file)</span></span>
                 <button type="button" class="btn btn-sm btn-outline-secondary btn-tambah-lampiran">
                     <i class="bi bi-plus me-1"></i>Tambah File
                 </button>
             </div>
+            <div class="alert alert-light border py-2 mb-2 small">
+                <i class="bi bi-camera me-1 text-primary"></i>Bisa dari <strong>galeri</strong> atau langsung <strong>ambil foto</strong> kamera HP.
+            </div>
             <div class="lampiran-container">
+                ${[0,1,2].map(r => `
                 <div class="lampiran-row border rounded p-2 mb-1">
                     <div class="row g-2 align-items-center">
                         <div class="col-md-4">
-                            <select name="jenis_lampiran_${idx}[]" class="form-select form-select-sm" required>
+                            <select name="jenis_lampiran_${idx}[]" class="form-select form-select-sm" ${r===0?'required':''}>
                                 <option value="KWITANSI">Kwitansi</option>
                                 <option value="STRUK">Struk / Receipt</option>
                                 <option value="FOTO">Foto Bukti</option>
@@ -303,16 +330,12 @@ document.getElementById('btnTambahItem').addEventListener('click', () => {
                         </div>
                         <div class="col-md-7">
                             <input type="file" name="lampiran_${idx}[]" class="form-control form-control-sm file-input"
-                                accept=".jpg,.jpeg,.png,.pdf" required>
+                                accept="image/*,.pdf"  ${r===0?'required':''}>
                         </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-hapus-lampiran d-none">
-                                <i class="bi bi-trash"></i>
-                            </button>
                         </div>
                         <div class="col-12 preview-area"></div>
                     </div>
-                </div>
+                </div>`).join('')}
             </div>
         </div>
     </div>`;
