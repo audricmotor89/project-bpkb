@@ -58,7 +58,8 @@
       "Bash(php -l app/Http/Controllers/JaminanKerjaController.php)",
       "Bash(php -l app/Http/Controllers/ReimburseController.php)",
       "Bash(git commit -m ' *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(cat ~/.ssh/config 2>/dev/null | grep -A5 \"38.147\\\\|project-bpkb\\\\|bpkb\" || ls ~/.ssh/*.pem ~/.ssh/id_* 2>/dev/null)"
     ]
   }
 }
