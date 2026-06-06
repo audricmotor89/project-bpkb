@@ -56,7 +56,9 @@
       "Bash(curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt -X POST http://localhost:8000/login -d 'username=superadmin&password=Admin@1234&_token=__CMDSUB_OUTPUT__')",
       "Bash(php -l app/Http/Controllers/PengajuanController.php)",
       "Bash(php -l app/Http/Controllers/JaminanKerjaController.php)",
-      "Bash(php -l app/Http/Controllers/ReimburseController.php)"
+      "Bash(php -l app/Http/Controllers/ReimburseController.php)",
+      "Bash(git commit -m ' *)",
+      "Bash(git add *)"
     ]
   }
 }

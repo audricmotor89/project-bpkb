@@ -115,27 +115,91 @@
     </div>
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label fw-semibold small">File BPKB <span class="text-danger">*</span></label>
-                <input type="file" name="file_bpkb" class="form-control @error('file_bpkb') is-invalid @enderror"
-                    accept=".jpg,.jpeg,.png,.pdf" required>
+
+            {{-- Toggle BPKB ada / tidak ada --}}
+            <div class="col-12">
+                <label class="form-label fw-semibold small">Kondisi BPKB <span class="text-danger">*</span></label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="kondisi_bpkb" id="bpkbAda" value="ADA"
+                            {{ old('kondisi_bpkb', 'ADA') === 'ADA' ? 'checked' : '' }}>
+                        <label class="form-check-label small" for="bpkbAda">
+                            <i class="bi bi-check-circle text-success me-1"></i>BPKB Fisik Tersedia
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="kondisi_bpkb" id="bpkbTidak" value="TIDAK_ADA"
+                            {{ old('kondisi_bpkb') === 'TIDAK_ADA' ? 'checked' : '' }}>
+                        <label class="form-check-label small" for="bpkbTidak">
+                            <i class="bi bi-exclamation-circle text-warning me-1"></i>BPKB Tidak Ada (ganti Screenshot Kartu Piutang)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Upload BPKB Fisik --}}
+            <div class="col-md-6" id="sectionBpkbFisik">
+                <label class="form-label fw-semibold small">
+                    Foto / Scan BPKB <span class="text-danger">*</span>
+                </label>
+                <div class="alert alert-info py-2 small mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Upload foto/scan halaman depan BPKB yang menampilkan nomor BPKB dan data kendaraan.
+                </div>
+                <input type="file" name="file_bpkb" id="inputBpkb"
+                    class="form-control @error('file_bpkb') is-invalid @enderror"
+                    accept=".jpg,.jpeg,.png,.pdf">
                 <div class="form-text">JPG/PNG/PDF, maks. 5MB</div>
                 @error('file_bpkb')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 <div id="preview_bpkb" class="mt-2"></div>
             </div>
+
+            {{-- Upload Screenshot Kartu Piutang (jika BPKB tidak ada) --}}
+            <div class="col-md-6" id="sectionKartuPiutang" style="display:none;">
+                <label class="form-label fw-semibold small">
+                    Screenshot Kartu Piutang <span class="text-danger">*</span>
+                </label>
+                <div class="alert alert-warning py-2 small mb-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Karena BPKB tidak tersedia, upload screenshot Kartu Piutang dari sistem sebagai pengganti.
+                </div>
+                <input type="file" name="file_kartu_piutang" id="inputKartuPiutang"
+                    class="form-control @error('file_kartu_piutang') is-invalid @enderror"
+                    accept=".jpg,.jpeg,.png,.pdf">
+                <div class="form-text">JPG/PNG/PDF, maks. 5MB</div>
+                @error('file_kartu_piutang')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <div id="preview_kartu_piutang" class="mt-2"></div>
+            </div>
+
+            {{-- KTP Nasabah --}}
             <div class="col-md-6">
                 <label class="form-label fw-semibold small">File KTP Nasabah <span class="text-danger">*</span></label>
+                <div class="alert alert-info py-2 small mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Upload foto/scan KTP nasabah yang masih berlaku.
+                </div>
                 <input type="file" name="file_ktp" class="form-control @error('file_ktp') is-invalid @enderror"
                     accept=".jpg,.jpeg,.png,.pdf" required>
                 <div class="form-text">JPG/PNG/PDF, maks. 5MB</div>
                 @error('file_ktp')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 <div id="preview_ktp" class="mt-2"></div>
             </div>
+
+            {{-- Surat Kuasa / Surat Keterangan --}}
             <div class="col-12">
-                <label class="form-label fw-semibold small">Dokumen Tambahan (opsional)</label>
+                <label class="form-label fw-semibold small">
+                    <i class="bi bi-file-earmark-text me-1"></i>Surat Kuasa / Surat Keterangan
+                    <span class="text-muted">(opsional)</span>
+                </label>
+                <div class="alert alert-light border py-2 small mb-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Upload jika ada: <strong>Surat Kuasa</strong> pengambilan BPKB, <strong>Surat Keterangan</strong> dari instansi,
+                    atau dokumen pendukung lainnya. Bisa lebih dari 1 file.
+                </div>
                 <input type="file" name="file_lainnya[]" class="form-control" accept=".jpg,.jpeg,.png,.pdf" multiple>
-                <div class="form-text">Bisa pilih lebih dari 1 file. JPG/PNG/PDF, maks. 5MB per file.</div>
+                <div class="form-text">JPG/PNG/PDF, maks. 5MB per file.</div>
             </div>
+
         </div>
     </div>
 </div>
@@ -163,6 +227,7 @@
 @push('scripts')
 <script>
 function previewFile(input, targetId) {
+    if (!input) return;
     input.addEventListener('change', function() {
         const target = document.getElementById(targetId);
         target.innerHTML = '';
@@ -179,7 +244,34 @@ function previewFile(input, targetId) {
         }
     });
 }
-previewFile(document.querySelector('[name="file_bpkb"]'), 'preview_bpkb');
+
+// Toggle BPKB ada / tidak ada
+function toggleKondisiBpkb() {
+    const ada      = document.getElementById('bpkbAda').checked;
+    const secFisik = document.getElementById('sectionBpkbFisik');
+    const secKp    = document.getElementById('sectionKartuPiutang');
+    const inpBpkb  = document.getElementById('inputBpkb');
+    const inpKp    = document.getElementById('inputKartuPiutang');
+
+    if (ada) {
+        secFisik.style.display = '';
+        secKp.style.display    = 'none';
+        inpBpkb.required       = true;
+        inpKp.required         = false;
+    } else {
+        secFisik.style.display = 'none';
+        secKp.style.display    = '';
+        inpBpkb.required       = false;
+        inpKp.required         = true;
+    }
+}
+
+document.getElementById('bpkbAda').addEventListener('change', toggleKondisiBpkb);
+document.getElementById('bpkbTidak').addEventListener('change', toggleKondisiBpkb);
+toggleKondisiBpkb(); // init
+
+previewFile(document.getElementById('inputBpkb'),       'preview_bpkb');
+previewFile(document.getElementById('inputKartuPiutang'),'preview_kartu_piutang');
 previewFile(document.querySelector('[name="file_ktp"]'), 'preview_ktp');
 </script>
 @endpush

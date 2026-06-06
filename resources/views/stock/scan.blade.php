@@ -133,17 +133,42 @@
                     Oleh: {{ $pengajuan->pengambilnya?->nama_lengkap }}
                 </small>
             </div>
+            @if($pengajuan->foto_pengambilan)
+            <div class="text-center mt-3">
+                <p class="small text-muted mb-1"><i class="bi bi-camera me-1"></i>Foto Bukti Pengambilan</p>
+                <img src="{{ asset('storage/' . $pengajuan->foto_pengambilan) }}"
+                     class="img-thumbnail" style="max-height:220px;">
+            </div>
+            @endif
         @elseif($pengajuan->status !== 'DISETUJUI')
             <div class="alert alert-warning text-center mb-0">
                 Status pengajuan: <strong>{{ $pengajuan->status }}</strong><br>
                 <small>Hanya yang berstatus DISETUJUI yang dapat dikonfirmasi.</small>
             </div>
         @else
-            <form method="POST" action="{{ route('stock.confirm', $pengajuan->qr_token) }}">
+            <form method="POST" action="{{ route('stock.confirm', $pengajuan->qr_token) }}"
+                  enctype="multipart/form-data" id="formConfirmAmbil">
                 @csrf
+
+                {{-- Upload foto konsumen --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">
+                        <i class="bi bi-camera me-1"></i>Foto Konsumen Menerima Jaminan
+                        <span class="text-danger">*</span>
+                    </label>
+                    <div class="alert alert-info py-2 small mb-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Ambil foto konsumen saat menerima dokumen jaminan sebagai bukti pengambilan.
+                    </div>
+                    <input type="file" name="foto_pengambilan" id="inputFotoScan"
+                        class="form-control" accept=".jpg,.jpeg,.png" required
+                        capture="environment">
+                    <div class="form-text">JPG/PNG, maks. 5MB</div>
+                    <div id="previewFotoScan" class="text-center mt-2"></div>
+                </div>
+
                 <button type="submit" class="btn btn-success w-100 py-3"
-                    style="font-size:1.05rem;"
-                    onclick="return confirm('Konfirmasi bahwa jaminan ini sudah diambil oleh cabang?')">
+                    style="font-size:1.05rem;">
                     <i class="bi bi-check2-circle me-2 fs-5"></i>
                     OK — SUDAH DIAMBIL
                 </button>
@@ -151,6 +176,20 @@
             <div class="text-center mt-2">
                 <small class="text-muted">Login sebagai: <strong>{{ auth()->user()->nama_lengkap }}</strong></small>
             </div>
+
+            <script>
+            document.getElementById('inputFotoScan').addEventListener('change', function () {
+                const preview = document.getElementById('previewFotoScan');
+                preview.innerHTML = '';
+                const file = this.files[0];
+                if (!file) return;
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'img-thumbnail';
+                img.style.maxHeight = '200px';
+                preview.appendChild(img);
+            });
+            </script>
         @endif
     </div>
 </div>

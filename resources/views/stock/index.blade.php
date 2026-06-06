@@ -156,13 +156,10 @@
                                 <i class="bi bi-qr-code"></i>
                             </a>
                             {{-- Tandai diambil manual --}}
-                            <form method="POST" action="{{ route('stock.tandai', $p) }}"
-                                onsubmit="return confirm('Tandai {{ $p->no_pengajuan }} sudah diambil?')">
-                                @csrf
-                                <button class="btn btn-sm btn-outline-success" title="Tandai diambil">
-                                    <i class="bi bi-check2-circle"></i>
-                                </button>
-                            </form>
+                            <button class="btn btn-sm btn-outline-success" title="Tandai diambil"
+                                onclick="bukaModalDiambil('{{ route('stock.tandai', $p) }}','{{ $p->no_pengajuan }}')">
+                                <i class="bi bi-check2-circle"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -188,4 +185,72 @@
         </small>
     </div>
 </div>
+{{-- ── Modal Tandai Diambil (upload foto) ───────────────────────────── --}}
+<div class="modal fade" id="modalDiambil" tabindex="-1" aria-labelledby="modalDiambilLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="formDiambil" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h6 class="modal-title" id="modalDiambilLabel">
+                        <i class="bi bi-check2-circle me-2"></i>Tandai Jaminan Diambil
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">
+                        Pengajuan: <strong id="labelNoPengajuan" class="text-success"></strong>
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">
+                            <i class="bi bi-camera me-1"></i>Foto Konsumen Menerima Jaminan
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="alert alert-info py-2 small mb-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Ambil / upload foto konsumen saat menerima dokumen jaminan sebagai bukti pengambilan.
+                        </div>
+                        <input type="file" name="foto_pengambilan" id="inputFotoDiambil"
+                            class="form-control" accept=".jpg,.jpeg,.png" required>
+                        <div class="form-text">JPG/PNG, maks. 5MB</div>
+                    </div>
+
+                    {{-- Preview foto --}}
+                    <div id="previewFotoDiambil" class="text-center"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check2-circle me-1"></i>Konfirmasi Diambil
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+function bukaModalDiambil(actionUrl, noPengajuan) {
+    document.getElementById('formDiambil').action = actionUrl;
+    document.getElementById('labelNoPengajuan').textContent = noPengajuan;
+    document.getElementById('inputFotoDiambil').value = '';
+    document.getElementById('previewFotoDiambil').innerHTML = '';
+    new bootstrap.Modal(document.getElementById('modalDiambil')).show();
+}
+
+document.getElementById('inputFotoDiambil').addEventListener('change', function () {
+    const preview = document.getElementById('previewFotoDiambil');
+    preview.innerHTML = '';
+    const file = this.files[0];
+    if (!file) return;
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.className = 'img-thumbnail mt-2';
+    img.style.maxHeight = '220px';
+    preview.appendChild(img);
+});
+</script>
+@endpush

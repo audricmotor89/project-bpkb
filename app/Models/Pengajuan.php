@@ -22,7 +22,7 @@ class Pengajuan extends Model
     protected $fillable = [
         'no_pengajuan', 'jenis_jaminan', 'cabang_id', 'dibuat_oleh',
         'status', 'catatan_pusat', 'diproses_oleh', 'tgl_dibuat', 'tgl_diproses',
-        'tgl_diambil', 'diambil_oleh', 'qr_token',
+        'tgl_diambil', 'diambil_oleh', 'foto_pengambilan', 'qr_token',
     ];
 
     protected $casts = [

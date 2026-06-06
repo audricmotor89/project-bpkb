@@ -80,7 +80,7 @@ class StockListController extends Controller
 
     // ── Konfirmasi diambil via QR ─────────────────────────────────────────
 
-    public function confirmAmbil(string $token)
+    public function confirmAmbil(Request $request, string $token)
     {
         $pengajuan = Pengajuan::where('qr_token', $token)->firstOrFail();
 
@@ -94,9 +94,16 @@ class StockListController extends Controller
                 ->with('error', 'Hanya item berstatus DISETUJUI yang dapat dikonfirmasi.');
         }
 
+        $fotoPath = null;
+        if ($request->hasFile('foto_pengambilan')) {
+            $fotoPath = $request->file('foto_pengambilan')
+                ->store('foto-pengambilan', 'public');
+        }
+
         $pengajuan->update([
-            'tgl_diambil'  => now(),
-            'diambil_oleh' => Auth::user()->id,
+            'tgl_diambil'       => now(),
+            'diambil_oleh'      => Auth::user()->id,
+            'foto_pengambilan'  => $fotoPath,
         ]);
 
         return redirect()->route('stock.scan', $token)
@@ -105,15 +112,27 @@ class StockListController extends Controller
 
     // ── Tandai diambil dari halaman stock list (tombol manual) ───────────
 
-    public function tandaiDiambil(Pengajuan $pengajuan)
+    public function tandaiDiambil(Request $request, Pengajuan $pengajuan)
     {
         if ($pengajuan->tgl_diambil) {
             return back()->with('error', 'Item ini sudah ditandai diambil.');
         }
 
+        $request->validate([
+            'foto_pengambilan' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+        ], [
+            'foto_pengambilan.required' => 'Foto konsumen menerima jaminan wajib diupload.',
+            'foto_pengambilan.mimes'    => 'Foto harus berformat JPG atau PNG.',
+            'foto_pengambilan.max'      => 'Ukuran foto maksimal 5MB.',
+        ]);
+
+        $fotoPath = $request->file('foto_pengambilan')
+            ->store('foto-pengambilan', 'public');
+
         $pengajuan->update([
-            'tgl_diambil'  => now(),
-            'diambil_oleh' => Auth::user()->id,
+            'tgl_diambil'      => now(),
+            'diambil_oleh'     => Auth::user()->id,
+            'foto_pengambilan' => $fotoPath,
         ]);
 
         return back()->with('success', "{$pengajuan->no_pengajuan} berhasil ditandai DIAMBIL.");
