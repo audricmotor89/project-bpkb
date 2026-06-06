@@ -132,15 +132,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/jaminan-kerja/buat',                    [JaminanKerjaController::class, 'create'])->name('jaminan-kerja.create');
         Route::post('/jaminan-kerja',                        [JaminanKerjaController::class, 'store'])->name('jaminan-kerja.store');
         Route::get('/jaminan-kerja/{jaminanKerja}',          [JaminanKerjaController::class, 'show'])->name('jaminan-kerja.show');
-        Route::post('/jaminan-kerja/{jaminanKerja}/kembalikan', [JaminanKerjaController::class, 'kembalikan'])->name('jaminan-kerja.kembalikan');
+        Route::post('/jaminan-kerja/{jaminanKerja}/kembalikan',       [JaminanKerjaController::class, 'kembalikan'])->name('jaminan-kerja.kembalikan');
+        Route::post('/jaminan-kerja/{jaminanKerja}/terima-karyawan',  [JaminanKerjaController::class, 'terimaKaryawan'])->name('jaminan-kerja.terima-karyawan');
         Route::get('/jaminan-kerja-lampiran/{lampiran}/download', [JaminanKerjaController::class, 'downloadLampiran'])->name('jaminan-kerja.lampiran.download');
         Route::get('/jaminan-kerja-lampiran/{lampiran}/preview',  [JaminanKerjaController::class, 'previewLampiran'])->name('jaminan-kerja.lampiran.preview');
     });
 
-    // ── Approval Jaminan Kerja oleh Admin Pusat ──────────────────────────
+    // ── Approval & Proses Pengembalian oleh Admin Pusat ──────────────────
     Route::middleware('role:ADMIN_PUSAT,SUPER_ADMIN')->group(function () {
-        Route::post('/jaminan-kerja/{jaminanKerja}/approve-pusat', [JaminanKerjaController::class, 'approvePusat'])->name('jaminan-kerja.approve-pusat');
-        Route::post('/jaminan-kerja/{jaminanKerja}/reject-pusat',  [JaminanKerjaController::class, 'rejectPusat'])->name('jaminan-kerja.reject-pusat');
+        Route::post('/jaminan-kerja/{jaminanKerja}/approve-pusat',     [JaminanKerjaController::class, 'approvePusat'])->name('jaminan-kerja.approve-pusat');
+        Route::post('/jaminan-kerja/{jaminanKerja}/reject-pusat',      [JaminanKerjaController::class, 'rejectPusat'])->name('jaminan-kerja.reject-pusat');
+        Route::post('/jaminan-kerja/{jaminanKerja}/serah-kurir',       [JaminanKerjaController::class, 'serahKurir'])->name('jaminan-kerja.serah-kurir');
+        Route::post('/jaminan-kerja/{jaminanKerja}/konfirmasi-selesai',[JaminanKerjaController::class, 'konfirmasiSelesai'])->name('jaminan-kerja.konfirmasi-selesai');
     });
 
     // ── Edit / Delete Jaminan Kerja (Super Admin only) ────────────────────

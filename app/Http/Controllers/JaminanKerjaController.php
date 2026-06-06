@@ -166,6 +166,89 @@ class JaminanKerjaController extends Controller
         return view('jaminan-kerja.show', compact('jaminanKerja'));
     }
 
+    // Step 1: Admin Pusat foto & serahkan ke messenger/kurir
+    public function serahKurir(Request $request, JaminanKerja $jaminanKerja)
+    {
+        if ($jaminanKerja->status !== 'AKTIF') {
+            return back()->with('error', 'Jaminan tidak dalam status AKTIF.');
+        }
+
+        $request->validate([
+            'foto_serah_kurir'   => 'required|array|min:1',
+            'foto_serah_kurir.*' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+            'catatan_pengembalian' => 'nullable|string|max:500',
+        ], [
+            'foto_serah_kurir.required'   => 'Foto serah ke kurir wajib diupload.',
+            'foto_serah_kurir.*.mimes'    => 'Foto harus berformat JPG atau PNG.',
+            'foto_serah_kurir.*.max'      => 'Ukuran foto maksimal 5MB.',
+        ]);
+
+        DB::transaction(function () use ($request, $jaminanKerja) {
+            $jaminanKerja->update([
+                'status'               => 'DIKIRIM_KURIR',
+                'dikirim_kurir_oleh'   => Auth::id(),
+                'tgl_dikirim_kurir'    => now(),
+                'catatan_pengembalian' => $request->catatan_pengembalian,
+            ]);
+            foreach ($request->file('foto_serah_kurir') as $file) {
+                $this->simpanLampiran($jaminanKerja, $file, 'FOTO_SERAH_KURIR', Auth::id());
+            }
+        });
+
+        return back()->with('success', 'Jaminan berhasil diserahkan ke kurir/messenger.');
+    }
+
+    // Step 2: Admin Cabang foto karyawan menerima jaminan
+    public function terimaKaryawan(Request $request, JaminanKerja $jaminanKerja)
+    {
+        if ($jaminanKerja->status !== 'DIKIRIM_KURIR') {
+            return back()->with('error', 'Jaminan belum dalam status Dikirim Kurir.');
+        }
+
+        $request->validate([
+            'foto_terima_karyawan'   => 'required|array|min:1',
+            'foto_terima_karyawan.*' => 'required|file|mimes:jpg,jpeg,png|max:5120',
+        ], [
+            'foto_terima_karyawan.required'   => 'Foto karyawan menerima jaminan wajib diupload.',
+            'foto_terima_karyawan.*.mimes'    => 'Foto harus berformat JPG atau PNG.',
+            'foto_terima_karyawan.*.max'      => 'Ukuran foto maksimal 5MB.',
+        ]);
+
+        DB::transaction(function () use ($request, $jaminanKerja) {
+            $jaminanKerja->update([
+                'status'                 => 'DITERIMA_KARYAWAN',
+                'diterima_karyawan_oleh' => Auth::id(),
+                'tgl_diterima_karyawan'  => now(),
+            ]);
+            foreach ($request->file('foto_terima_karyawan') as $file) {
+                $this->simpanLampiran($jaminanKerja, $file, 'FOTO_TERIMA_KARYAWAN', Auth::id());
+            }
+        });
+
+        return back()->with('success', 'Konfirmasi penerimaan karyawan berhasil disimpan.');
+    }
+
+    // Step 3: Admin Pusat konfirmasi selesai
+    public function konfirmasiSelesai(Request $request, JaminanKerja $jaminanKerja)
+    {
+        if ($jaminanKerja->status !== 'DITERIMA_KARYAWAN') {
+            return back()->with('error', 'Jaminan belum dalam status Diterima Karyawan.');
+        }
+
+        $request->validate([
+            'catatan_selesai' => 'nullable|string|max:500',
+        ]);
+
+        $jaminanKerja->update([
+            'status'               => 'KEMBALI',
+            'dikembalikan_oleh'    => Auth::id(),
+            'tgl_dikembalikan'     => now(),
+            'catatan_pengembalian' => $request->catatan_selesai ?? $jaminanKerja->catatan_pengembalian,
+        ]);
+
+        return back()->with('success', 'Proses pengembalian jaminan telah SELESAI.');
+    }
+
     public function approvePusat(Request $request, JaminanKerja $jaminanKerja)
     {
         if ($jaminanKerja->status_pusat !== 'MENUNGGU') {
